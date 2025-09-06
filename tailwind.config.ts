@@ -52,6 +52,12 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				countdown: {
+					bg: 'hsl(var(--countdown-bg))',
+					text: 'hsl(var(--countdown-text))',
+					accent: 'hsl(var(--countdown-accent))',
+					glow: 'hsl(var(--countdown-glow))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
