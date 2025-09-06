@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Trash2, Edit3 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ProgressIndicator } from '@/components/ProgressIndicator';
+import { CountdownEvent } from '@/types/event';
 
 interface TimeLeft {
   days: number;
@@ -8,24 +12,18 @@ interface TimeLeft {
   seconds: number;
 }
 
-const CountdownTimer = () => {
+interface CountdownTimerProps {
+  event: CountdownEvent;
+  onDelete: (id: string) => void;
+}
+
+const CountdownTimer = ({ event, onDelete }: CountdownTimerProps) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
     const calculateTimeLeft = (): TimeLeft => {
-      // Set target date to October 1st, 2024 at 10:30 AM
-      const targetDate = new Date();
-      targetDate.setMonth(9); // October (0-indexed)
-      targetDate.setDate(1);
-      targetDate.setHours(10, 30, 0, 0);
-
-      // If we're past October 1st of this year, set it for next year
       const now = new Date();
-      if (now > targetDate) {
-        targetDate.setFullYear(targetDate.getFullYear() + 1);
-      }
-
-      const difference = targetDate.getTime() - now.getTime();
+      const difference = event.targetDate.getTime() - now.getTime();
 
       if (difference > 0) {
         return {
@@ -48,47 +46,104 @@ const CountdownTimer = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [event.targetDate]);
 
   const formatNumber = (num: number): string => {
     return num.toString().padStart(2, '0');
   };
 
+  const isCompleted = new Date() > event.targetDate;
+  const totalTime = timeLeft.days + timeLeft.hours + timeLeft.minutes + timeLeft.seconds;
+
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <Card className="bg-countdown-bg border-countdown-accent/20 shadow-2xl shadow-countdown-accent/10 p-8 md:p-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-          {[
-            { value: timeLeft.days, label: 'Days' },
-            { value: timeLeft.hours, label: 'Hours' },
-            { value: timeLeft.minutes, label: 'Minutes' },
-            { value: timeLeft.seconds, label: 'Seconds' },
-          ].map((item, index) => (
-            <div key={item.label} className="text-center group">
-              <div className="relative">
-                <div className="text-5xl md:text-7xl font-bold text-countdown-text mb-2 font-mono tracking-tight transition-all duration-300 group-hover:scale-110">
-                  {formatNumber(item.value)}
-                </div>
-                <div className="absolute inset-0 text-5xl md:text-7xl font-bold text-countdown-accent/20 mb-2 font-mono tracking-tight blur-sm">
-                  {formatNumber(item.value)}
-                </div>
-              </div>
-              <div className="text-countdown-accent text-sm md:text-base font-medium uppercase tracking-wider">
-                {item.label}
-              </div>
-              {index < 3 && (
-                <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-countdown-accent/30 text-2xl">
-                  :
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+    <div className="w-full">
+      <Card 
+        className="border-2 shadow-xl p-6 md:p-8 relative overflow-hidden transition-all duration-300 hover:shadow-2xl"
+        style={{ borderColor: event.color + '40' }}
+      >
+        {/* Background gradient */}
+        <div 
+          className="absolute inset-0 opacity-5"
+          style={{ background: `linear-gradient(135deg, ${event.color}20 0%, transparent 100%)` }}
+        />
         
-        <div className="mt-8 pt-6 border-t border-countdown-accent/20">
-          <p className="text-countdown-text/70 text-center text-sm md:text-base">
-            Time remaining until your exam on{' '}
-            <span className="text-countdown-accent font-semibold">October 1st at 10:30 AM</span>
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6 relative z-10">
+          <div>
+            <h3 className="text-xl md:text-2xl font-bold text-foreground mb-1">
+              {event.title}
+            </h3>
+            {event.description && (
+              <p className="text-muted-foreground text-sm">{event.description}</p>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(event.id)}
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Status */}
+        {isCompleted ? (
+          <div className="text-center py-8">
+            <div className="text-4xl md:text-6xl font-bold mb-4" style={{ color: event.color }}>
+              🎉 EXAM COMPLETED! 🎉
+            </div>
+            <p className="text-lg text-muted-foreground">Hope it went well!</p>
+          </div>
+        ) : totalTime === 0 ? (
+          <div className="text-center py-8">
+            <div className="text-4xl md:text-6xl font-bold mb-4" style={{ color: event.color }}>
+              🚀 EXAM STARTED! 🚀
+            </div>
+            <p className="text-lg text-muted-foreground">Good luck!</p>
+          </div>
+        ) : (
+          <>
+            {/* Countdown Display */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+              {[
+                { value: timeLeft.days, label: 'Days' },
+                { value: timeLeft.hours, label: 'Hours' },
+                { value: timeLeft.minutes, label: 'Minutes' },
+                { value: timeLeft.seconds, label: 'Seconds' },
+              ].map((item, index) => (
+                <div key={item.label} className="text-center group">
+                  <div className="relative">
+                    <div 
+                      className="text-3xl md:text-5xl font-bold mb-2 font-mono tracking-tight transition-all duration-300 group-hover:scale-110"
+                      style={{ color: event.color }}
+                    >
+                      {formatNumber(item.value)}
+                    </div>
+                  </div>
+                  <div className="text-muted-foreground text-xs md:text-sm font-medium uppercase tracking-wider">
+                    {item.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress Indicator */}
+            <ProgressIndicator 
+              targetDate={event.targetDate}
+              createdAt={event.createdAt}
+              className="mb-6"
+            />
+          </>
+        )}
+        
+        {/* Target Date Info */}
+        <div className="mt-6 pt-4 border-t border-border">
+          <p className="text-muted-foreground text-center text-sm">
+            Exam scheduled for{' '}
+            <span className="font-semibold" style={{ color: event.color }}>
+              {event.targetDate.toLocaleDateString()} at {event.targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
           </p>
         </div>
       </Card>

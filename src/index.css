@@ -36,7 +36,7 @@ All colors MUST be HSL.
     --input: 210 25% 88%;
     --ring: 210 85% 35%;
 
-    /* Custom countdown colors */
+    /* Custom countdown colors (legacy - now dynamic) */
     --countdown-bg: 220 15% 10%;
     --countdown-text: 0 0% 100%;
     --countdown-accent: 160 75% 55%;
